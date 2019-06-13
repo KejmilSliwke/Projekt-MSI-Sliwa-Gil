@@ -70,8 +70,8 @@ print('Wymyslone atrybuty: \n', example_measures,'\nEtykiety wymyslonych atrybut
 from math import sqrt
 punkt1 = [1,3]
 punkt2 = [2,5]
-euclidian_distance = sqrt( (punkt1[0]-punkt2[0])**2 + (punkt1[1]-punkt2[1])**2 )
-print(euclidian_distance)
+euclidean_distance = sqrt( (punkt1[0]-punkt2[0])**2 + (punkt1[1]-punkt2[1])**2 )
+print(euclidean_distance)
 '''
 
 
@@ -90,7 +90,7 @@ style.use('fivethirtyeight')
 #uzywajac {} tworzymy slownik (dictionary), klase "k" oraz klase 'r'
 dataset = { 'k': [ [1,2], [2,3], [3,1] ], 'r':[ [6,5], [7,7], [8,6] ] }
 #pojawia sie nowy punkt, bez przyporzadkowanej klasy
-new_features = [5,7]
+new_features = [4,4]
 
 '''
 #nanoszenie kazdego punktu z datasetu na plaszczyzne
@@ -102,9 +102,43 @@ plt.scatter(new_features[0], new_features[1])
 plt.show()
 '''
 
-def k_nearest_neighbours(data, predict, k=3)
+def k_nearest_neighbours(data, predict, k=3):
     if len(data) >= k:
         warnings.warn('K jest ustawione na wartosc mniejsza niz ilosc wszystkich klas!')
 
-    knnalgos
+    distances = []
+    for group in data:
+        for features in data[group]:
+            #szybsza wersja obliczen odleglosci dzieki algorytmom z biblioteki
+            euclidean_distance = np.linalg.norm(np.array(features)-np.array(predict))
+            distances.append([euclidean_distance, group])
+
+    #jak juz posortujemy odleglosci chcemy tylko te do k
+    # for i in sorted(distances)[:k]:
+    #    i[i]
+    # to to samo co
+    votes = [i[1] for i in sorted(distances)[:k]]
+
+    #wyswietla jaka grupa byla najczesciej glosowana, oraz ile bylo na nia glosow
+    print(Counter(votes).most_common(1))
+
+    vote_result = Counter(votes).most_common(1)[0][0]
     return vote_result
+
+#wyswietla koncowy wynik glosowania
+result = k_nearest_neighbours(dataset, new_features, k=3)
+
+print(result)
+
+
+#rysowanie punktow na plaszczyznie
+for i in dataset:
+    for ii in dataset[i]:
+        plt.scatter(ii[0],ii[1], s=100, color=i)
+#nowy punkt na plaszyznie
+plt.scatter(new_features[0], new_features[1], color = result)
+plt.show()
+
+
+###################################     POROWNUJEMY NASZ DO TEGO Z SCIKIT ################
+
