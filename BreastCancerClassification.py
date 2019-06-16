@@ -1,3 +1,4 @@
+'''
 import numpy as np
 from sklearn import  neighbors
 from sklearn.model_selection import train_test_split
@@ -10,7 +11,7 @@ pd.set_option('display.width', 170)
 
 ##################################  UZYWAMY KLASYFIKATORA KNN Z SCIKIT LEARN    ############################################################
 
-'''
+
 #pobieramy dane z pliku tekstowego
 df = pd.read_csv('breast-cancer-wisconsin.data')
 
@@ -22,7 +23,6 @@ df.replace('?', -99999, inplace=True)
 #usuwamy kolumne id, poniewaz nie wplywa ona na zlosliwosc guza
 df.drop(['id'], 1, inplace=True)
 
-
 #bierzemy atrybuty wyrzucajac tylko ostatnia kolumne, ktora jest etykieta
 X = np.array(df.drop(['class'],1))
 y = np.array(df['class'])
@@ -31,7 +31,7 @@ y = np.array(df['class'])
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2)
 
 #Przykladowy zbior treningowy wraz z etykietami
-print('Przykladowe atrybuty wraz z etykieta:')
+print('Przykadowe atrybuty ze zbioru treningowego wraz z ich etykieta:')
 for x in range(0,2):
     print(X_train[x], y_train[x])
 
@@ -54,7 +54,7 @@ example_measures = np.array([[4,8,7,5,5,6,7,2,1],[4,2,1,2,2,2,3,2,1]])
 example_measures = example_measures.reshape(len(example_measures), -1)
 prediction = KNN.predict(example_measures)
 prediction = prediction.reshape(2, 1)
-print('Wymyslone atrybuty: \n', example_measures,'\nEtykiety wymyslonych atrybutow: \n',prediction)
+print('Losowe atrybuty (nie bedace w zadnym z poprzednich zbiorow treningowych i testowych): \n', example_measures,'\nEtykiety dla tych atrybutow atrybutow: \n',prediction)
 '''
 
 
@@ -68,17 +68,18 @@ print('Wymyslone atrybuty: \n', example_measures,'\nEtykiety wymyslonych atrybut
 ####################### Podstawy odleglosci euklidesowej
 '''
 from math import sqrt
-punkt1 = [1,3]
-punkt2 = [2,5]
-euclidean_distance = sqrt( (punkt1[0]-punkt2[0])**2 + (punkt1[1]-punkt2[1])**2 )
-print(euclidean_distance)
+p1 = [1,3]
+p2 = [2,5]
+euclidean_distance = sqrt( (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2 )
+print('Koordynaty punktu pierwszego: ', p1[0],p1[1], '\nKoordynaty punktu drugiego: ' ,p2[0],p2[1],
+'\nOdleglosc miedzy punktami: % .2f' % euclidean_distance)
 '''
 
 
 
 ########################## Dalsza czesc wlasnego KNN
 
-
+'''
 import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -92,15 +93,15 @@ dataset = { 'k': [ [1,2], [2,3], [3,1] ], 'r':[ [6,5], [7,7], [8,6] ] }
 #pojawia sie nowy punkt, bez przyporzadkowanej klasy
 new_features = [4,4]
 
-'''
+
 #nanoszenie kazdego punktu z datasetu na plaszczyzne
-for i in dataset:
-    for ii in dataset[i]:
-        plt.scatter(ii[0],ii[1], s=100, color=i)
+#for i in dataset:
+    #for ii in dataset[i]:
+        #plt.scatter(ii[0],ii[1], s=100, color=i)
 #nowy punkt na plaszyznie
-plt.scatter(new_features[0], new_features[1])
-plt.show()
-'''
+#plt.scatter(new_features[0], new_features[1])
+#plt.show()
+
 
 def k_nearest_neighbours(data, predict, k=3):
     if len(data) >= k:
@@ -138,7 +139,203 @@ for i in dataset:
 #nowy punkt na plaszyznie
 plt.scatter(new_features[0], new_features[1], color = result)
 plt.show()
-
+'''
 
 ###################################     POROWNUJEMY NASZ DO TEGO Z SCIKIT ################
+'''
+import numpy as np
+from math import sqrt
+import warnings
+from collections import Counter
+import pandas as pd
+import random
+pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_columns', 20)
+pd.set_option('display.width', 170)
+
+
+
+def k_nearest_neighbours(data, predict, k=3):
+    if len(data) >= k:
+        warnings.warn('K jest ustawione na wartosc mniejsza niz ilosc wszystkich klas!')
+
+    distances = []
+    for group in data:
+        for features in data[group]:
+            euclidean_distance = np.linalg.norm(np.array(features)-np.array(predict))
+            distances.append([euclidean_distance, group])
+
+    votes = [i[1] for i in sorted(distances)[:k]]
+    #print(Counter(votes).most_common(1))
+    vote_result = Counter(votes).most_common(1)[0][0]
+
+    return vote_result
+
+
+df = pd.read_csv('breast-cancer-wisconsin.data')
+df.replace('?',-99999, inplace=True)
+df.drop(['id'], 1, inplace=True)
+
+#Niektore atrybuty byly odczytywane w apostrofach ''. Zeby tego uniknac konwertujemy
+#wszystko do floatow, zeby pozniej nie bylo z tym jakis problemow
+full_data = df.astype(float).values.tolist()
+print(full_data[:3])
+
+#mieszamy sobie, zeby nie bylo po kolei jak pierwotnie, poniewaz za kazdym razem jak odpalamy
+#program nie chcemy go uczyc i testowac na tych samych zbiorach danych
+random.shuffle(full_data)
+print(full_data[:3])
+
+#nasz train test split
+test_size = 0.2
+train_set = {2:[], 4:[]}
+test_set = {2:[], 4:[]}
+train_data = full_data[:-int(test_size*len(full_data))]
+test_data = full_data[-int(test_size*len(full_data)):]
+
+#uzupelniamy liste train set
+for i in train_data:
+    train_set[i[-1]].append(i[:-1])
+
+#uzupelniamy liste train set
+for i in test_data:
+    test_set[i[-1]].append(i[:-1])
+
+
+correct = 0
+total = 0
+
+
+
+for group in test_set:
+    for data in test_set[group]:
+        vote = k_nearest_neighbours(train_set, data, k=5)
+        #Jesli grupa przewidziana przez nasz KNN jest zgodna z grupa w zbiorze
+        #
+        if group == vote:
+            correct +=1
+        total +=1
+print('Accuracy: % .3f' % float(correct/total))
+'''
+
+
+#########################TERAZ BEDZIEMY POROWNYWAC Z TYM Z SCIKIT LEARN I PEWNOSC#######
+
+
+#jesli bedziemy zwiekszac nasze k to accuracy bedzie stopniowo malec
+
+import numpy as np
+from math import sqrt
+import warnings
+from collections import Counter
+import pandas as pd
+import random
+pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_columns', 20)
+pd.set_option('display.width', 170)
+
+
+
+def k_nearest_neighbours(data, predict, k=3):
+    if len(data) >= k:
+        warnings.warn('K jest ustawione na wartosc mniejsza niz ilosc wszystkich klas!')
+
+    distances = []
+    for group in data:
+        for features in data[group]:
+            euclidean_distance = np.linalg.norm(np.array(features)-np.array(predict))
+            distances.append([euclidean_distance, group])
+
+    votes = [i[1] for i in sorted(distances)[:k]]
+    vote_result = Counter(votes).most_common(1)[0][0]
+    #dodajemy confidence
+    confidence = Counter(votes).most_common(1)[0][1] / k
+    #dodajemy confidence
+    #print(vote_result, confidence)
+    return vote_result, confidence
+
+
+
+
+accuracies= []
+
+for i in range(10):
+    df = pd.read_csv('breast-cancer-wisconsin.data')
+    df.replace('?',-99999, inplace=True)
+    df.drop(['id'], 1, inplace=True)
+
+    #Niektore atrybuty byly odczytywane w apostrofach ''. Zeby tego uniknac konwertujemy
+    #wszystko do floatow, zeby pozniej nie bylo z tym jakis problemow
+    full_data = df.astype(float).values.tolist()
+
+
+    #mieszamy sobie, zeby nie bylo po kolei jak pierwotnie, poniewaz za kazdym razem jak odpalamy
+    #program nie chcemy go uczyc i testowac na tych samych zbiorach danych
+    random.shuffle(full_data)
+
+
+    #nasz train test split
+    #test size mozemy zmieniac i zobaczyc co sie dzieje
+    test_size = 0.4
+    train_set = {2:[], 4:[]}
+    test_set = {2:[], 4:[]}
+    train_data = full_data[:-int(test_size*len(full_data))]
+    test_data = full_data[-int(test_size*len(full_data)):]
+
+    #uzupelniamy liste train set
+    for i in train_data:
+        train_set[i[-1]].append(i[:-1])
+
+    #uzupelniamy liste train set
+    for i in test_data:
+        test_set[i[-1]].append(i[:-1])
+
+
+    correct = 0
+    total = 0
+
+    for group in test_set:
+        for data in test_set[group]:
+            vote, confidence = k_nearest_neighbours(train_set, data, k=5)
+            #Jesli grupa przewidziana przez nasz KNN jest zgodna z grupa w zbiorze
+            #
+            if group == vote:
+                correct +=1
+            #else:
+                #pokazuje confidence glosow, ktore byly zle
+                #print(confidence)
+            total +=1
+    #print('Accuracy: % .3f' % float(correct/total))
+    accuracies.append((correct/total))
+#srednie accuracy
+print(sum(accuracies)/len(accuracies))
+
+
+
+
+from sklearn import  neighbors
+from sklearn.model_selection import train_test_split
+
+#tworzymy liste accuracy z kilku testow
+accuracies= []
+
+for i in range(10):
+    df = pd.read_csv('breast-cancer-wisconsin.data')
+    df.replace('?', -99999, inplace=True)
+    df.drop(['id'], 1, inplace=True)
+
+    X = np.array(df.drop(['class'],1))
+    y = np.array(df['class'])
+
+    X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2)
+
+
+    KNN = neighbors.KNeighborsClassifier()
+    KNN.fit(X_train, y_train)
+    accuracy = KNN.score(X_test, y_test)
+    #print('Dokladnosc(accuracy) = % .3f' % accuracy)
+    accuracies.append(accuracy)
+
+#srednie accuracy
+print(sum(accuracies)/len(accuracies))
 
