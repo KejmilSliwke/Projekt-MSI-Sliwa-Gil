@@ -168,7 +168,6 @@ def k_nearest_neighbours(data, predict, k=3):
     votes = [i[1] for i in sorted(distances)[:k]]
     #print(Counter(votes).most_common(1))
     vote_result = Counter(votes).most_common(1)[0][0]
-
     return vote_result
 
 
@@ -176,36 +175,26 @@ df = pd.read_csv('breast-cancer-wisconsin.data')
 df.replace('?',-99999, inplace=True)
 df.drop(['id'], 1, inplace=True)
 
-#Niektore atrybuty byly odczytywane w apostrofach ''. Zeby tego uniknac konwertujemy
-#wszystko do floatow, zeby pozniej nie bylo z tym jakis problemow
 full_data = df.astype(float).values.tolist()
-print(full_data[:3])
-
-#mieszamy sobie, zeby nie bylo po kolei jak pierwotnie, poniewaz za kazdym razem jak odpalamy
-#program nie chcemy go uczyc i testowac na tych samych zbiorach danych
+print('Pierwsze 3 rekordy z pliku csv przed przemieszaniem:','\n',full_data[0],
+      '\n',full_data[1],'\n',full_data[2])
 random.shuffle(full_data)
-print(full_data[:3])
+print('\nPierwsze 3 rekordy z pliku csv po przemieszaniu','\n',full_data[0],
+      '\n',full_data[1],'\n',full_data[2])
 
-#nasz train test split
 test_size = 0.2
 train_set = {2:[], 4:[]}
 test_set = {2:[], 4:[]}
 train_data = full_data[:-int(test_size*len(full_data))]
 test_data = full_data[-int(test_size*len(full_data)):]
 
-#uzupelniamy liste train set
 for i in train_data:
     train_set[i[-1]].append(i[:-1])
-
-#uzupelniamy liste train set
 for i in test_data:
     test_set[i[-1]].append(i[:-1])
 
-
 correct = 0
 total = 0
-
-
 
 for group in test_set:
     for data in test_set[group]:
@@ -215,7 +204,7 @@ for group in test_set:
         if group == vote:
             correct +=1
         total +=1
-print('Accuracy: % .3f' % float(correct/total))
+print('\nDokladnosc naszego klasyfikatora KNN: % .3f' % float(correct/total))
 '''
 
 
@@ -235,91 +224,63 @@ pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 170)
 
 
-
 def k_nearest_neighbours(data, predict, k=3):
     if len(data) >= k:
         warnings.warn('K jest ustawione na wartosc mniejsza niz ilosc wszystkich klas!')
-
     distances = []
     for group in data:
         for features in data[group]:
             euclidean_distance = np.linalg.norm(np.array(features)-np.array(predict))
             distances.append([euclidean_distance, group])
-
     votes = [i[1] for i in sorted(distances)[:k]]
     vote_result = Counter(votes).most_common(1)[0][0]
-    #dodajemy confidence
     confidence = Counter(votes).most_common(1)[0][1] / k
-    #dodajemy confidence
     #print(vote_result, confidence)
     return vote_result, confidence
 
-
-
-
+proby = 300
 accuracies= []
-
-for i in range(10):
+for i in range(proby):
     df = pd.read_csv('breast-cancer-wisconsin.data')
     df.replace('?',-99999, inplace=True)
     df.drop(['id'], 1, inplace=True)
-
-    #Niektore atrybuty byly odczytywane w apostrofach ''. Zeby tego uniknac konwertujemy
-    #wszystko do floatow, zeby pozniej nie bylo z tym jakis problemow
     full_data = df.astype(float).values.tolist()
-
-
-    #mieszamy sobie, zeby nie bylo po kolei jak pierwotnie, poniewaz za kazdym razem jak odpalamy
-    #program nie chcemy go uczyc i testowac na tych samych zbiorach danych
     random.shuffle(full_data)
 
-
-    #nasz train test split
-    #test size mozemy zmieniac i zobaczyc co sie dzieje
-    test_size = 0.4
+    test_size = 0.2
     train_set = {2:[], 4:[]}
     test_set = {2:[], 4:[]}
     train_data = full_data[:-int(test_size*len(full_data))]
     test_data = full_data[-int(test_size*len(full_data)):]
 
-    #uzupelniamy liste train set
     for i in train_data:
         train_set[i[-1]].append(i[:-1])
-
-    #uzupelniamy liste train set
     for i in test_data:
         test_set[i[-1]].append(i[:-1])
 
-
+    #print('Pewnosc wyboru klas, ktore zostaly blednie ocenione w procesie predykcji:')
     correct = 0
     total = 0
-
     for group in test_set:
         for data in test_set[group]:
             vote, confidence = k_nearest_neighbours(train_set, data, k=5)
-            #Jesli grupa przewidziana przez nasz KNN jest zgodna z grupa w zbiorze
-            #
             if group == vote:
                 correct +=1
             #else:
-                #pokazuje confidence glosow, ktore byly zle
                 #print(confidence)
             total +=1
-    #print('Accuracy: % .3f' % float(correct/total))
+    #print('Dokladnosc naszego klasyfikatora: % .3f' % float(correct/total))
     accuracies.append((correct/total))
-#srednie accuracy
-print(sum(accuracies)/len(accuracies))
 
+print('Srednia dokladnosc naszego klasyfikatora KNN przy',proby,'probach:',sum(accuracies)/len(accuracies),'\n')
 
 
 
 from sklearn import  neighbors
 from sklearn.model_selection import train_test_split
-
-#tworzymy liste accuracy z kilku testow
 accuracies= []
 
-for i in range(10):
+for i in range(proby):
     df = pd.read_csv('breast-cancer-wisconsin.data')
     df.replace('?', -99999, inplace=True)
     df.drop(['id'], 1, inplace=True)
@@ -333,9 +294,7 @@ for i in range(10):
     KNN = neighbors.KNeighborsClassifier()
     KNN.fit(X_train, y_train)
     accuracy = KNN.score(X_test, y_test)
-    #print('Dokladnosc(accuracy) = % .3f' % accuracy)
+    #print('Dokladnosc klasyfikatora sci-kit learn = % .3f' % accuracy)
     accuracies.append(accuracy)
 
-#srednie accuracy
-print(sum(accuracies)/len(accuracies))
-
+print('Srednia dokladnosc KNN sci-kit learn przy',proby,'probach:',sum(accuracies)/len(accuracies))
